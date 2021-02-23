@@ -1,11 +1,16 @@
 .include    "address_map_arm.s" 
 
 /********************************************************************************
- * This program demonstrates use of parallel ports in the Computer System
+ * Student: Ngoc Pham
+ * ECE 3610 - Lab02 Q1
  *
  * It performs the following:
- * 	1. displays a rotating pattern on the LEDs
- * 	2. if a KEY is pressed, uses SW switches as the pattern
+ * 	1. Lowest 8-bit of SW values store a pattern in processor 
+ *      2. The program takes input as SW and KEY values for performing actions
+ * 	3. Holding KEY #0, shift the pattern to the right by 1 continuously
+ *      4. Holding KEY #1, shift the pattern to the left by 1 continuously
+ *      5. Press KEY #2 to update the new SW pattern
+ *      6. Press KEY #3 to update the original SW pattern      
  ********************************************************************************/
 .text        /* executable code follows */
 .global     _start 

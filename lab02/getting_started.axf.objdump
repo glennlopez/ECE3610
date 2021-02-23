@@ -32,7 +32,7 @@ DO_DISPLAY:
         LDR     R6, [R3]        // load pushbutton keys
   1c:	e5936000 	ldr	r6, [r3]
 
-        @ CMP     R6, #0          // check if no keys is presssed
+        @ CMP     R6, #0          // check if no keys is presssed (commented out bc unneccessary)
         @ BEQ     WAIT      
         CMP     R6, #1          // check if key #0 is presssed
   20:	e3560001 	cmp	r6, #1
