@@ -50,7 +50,7 @@ DELAY:
         SUBS    R6, R6, #1      
         BNE     DELAY           
 
-        LDR     R6, [R3]        
+        LDR     R6, [R3]        // load current value of SW back to R6 in processor
         CMP     R6, #1          // check if KEY #0 is pressed          
         BNE     CORRECT_PASSWORD // if KEY #0 not pressed, continue displaying LEDs of correct password
         B       WAIT            //  if KEY #0 pressed, jump back to wait for load SW combination again
