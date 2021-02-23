@@ -10,7 +10,7 @@
  * 	3. ***REMEMBER to press KEY #0 for checking password every time***
  *      4. if SW values match the pre-defined password, LEDs will display for cheering
  *      5. if SW values don't match pre-defined password, no LEDs will display
- *      6. change the combination of SW until guess the correct password      
+ *      6. Try different combination of SW until guess the correct password      
  *      7. ***REMEMBER to press KEY #0 for checking password every time***
  ********************************************************************************/
 .text        /* executable code follows */
