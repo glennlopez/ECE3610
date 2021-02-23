@@ -11,22 +11,22 @@ Disassembly of section .text:
 _start:                         
 
         LDR     R1, =LED_BASE   // base address of LED lights
-   0:	e59f1064 	ldr	r1, [pc, #100]	; 6c <LED_for_correct_password+0x4>
+   0:	e59f1078 	ldr	r1, [pc, #120]	; 80 <LED_for_correct_password+0x4>
         LDR     R2, =SW_BASE    // base address of SW switches
-   4:	e59f2064 	ldr	r2, [pc, #100]	; 70 <LED_for_correct_password+0x8>
+   4:	e59f2078 	ldr	r2, [pc, #120]	; 84 <LED_for_correct_password+0x8>
         LDR     R3, =KEY_BASE   // base address of KEY pushbuttons
-   8:	e59f3064 	ldr	r3, [pc, #100]	; 74 <LED_for_correct_password+0xc>
+   8:	e59f3078 	ldr	r3, [pc, #120]	; 88 <LED_for_correct_password+0xc>
 
         MOV     R4, #0          // value for LED displays when incorrect password
    c:	e3a04000 	mov	r4, #0
         LDR     R11, LED_for_correct_password   // value for LED displays when correct password (#0bAAAAAAAA = 1010... for 32-bit)
-  10:	e59fb050 	ldr	r11, [pc, #80]	; 68 <LED_for_correct_password>
-        LDR     R12, password   // value of password stored in memory (#0b10011011)
-  14:	e59fc048 	ldr	r12, [pc, #72]	; 64 <password>
+  10:	e59fb064 	ldr	r11, [pc, #100]	; 7c <LED_for_correct_password>
 
-00000018 <WAIT>:
+00000014 <WAIT>:
 
 WAIT:
+        LDR     R12, password   // value of password stored in memory (#0b10011011)
+  14:	e59fc05c 	ldr	r12, [pc, #92]	; 78 <password>
         LDR     R5, [R2]        // load SW to processor's register
   18:	e5925000 	ldr	r5, [r2]
         LDR     R6, [R3]        // load KEY to processor's register
@@ -37,7 +37,7 @@ WAIT:
         BEQ     CHECK_PASSWORD
   24:	0a000000 	beq	2c <CHECK_PASSWORD>
         BNE     WAIT
-  28:	1afffffa 	bne	18 <WAIT>
+  28:	1afffff9 	bne	14 <WAIT>
 
 0000002c <CHECK_PASSWORD>:
 
@@ -49,19 +49,19 @@ CHECK_PASSWORD:
         STR     R4, [R1]        // incorrect password, no LEDs (#0)
   34:	e5814000 	str	r4, [r1]
         BNE     WAIT            // loop back to check for SW combination
-  38:	1afffff6 	bne	18 <WAIT>
+  38:	1afffff5 	bne	14 <WAIT>
 
 0000003c <CORRECT_PASSWORD>:
 
 //display LED to indicate correct password
 CORRECT_PASSWORD:
-        STR     R11, [R1]       // store a pre-defined pattern to the LED displays
+        STR     R11, [R1]       // store a pre-defined pattern R11 to the LED displays [R1]
   3c:	e581b000 	str	r11, [r1]
         ROR     R11, #1         // rotate LEDs to the right by 1
   40:	e1a0b0eb 	ror	r11, r11, #1
 
         LDR     R6, =100000000   // delay counter        
-  44:	e59f602c 	ldr	r6, [pc, #44]	; 78 <LED_for_correct_password+0x10>
+  44:	e59f6040 	ldr	r6, [pc, #64]	; 8c <LED_for_correct_password+0x10>
         B       DELAY
   48:	eaffffff 	b	4c <DELAY>
 
@@ -72,21 +72,38 @@ DELAY:
         BNE     DELAY           
   50:	1afffffd 	bne	4c <DELAY>
 
-        LDR     R6, [R3]        
+        LDR     R6, [R3]        // load current value of SW back to R6 in processor
   54:	e5936000 	ldr	r6, [r3]
-        CMP     R6, #1          // check if KEY #0 is pressed          
+        CMP     R6, #1
   58:	e3560001 	cmp	r6, #1
+        BEQ     WAIT            //  if KEY #0 pressed, jump back to wait for load SW combination again
+  5c:	0affffec 	beq	14 <WAIT>
+        CMP     R6, #4          // check if KEY #3 is pressed          
+  60:	e3560004 	cmp	r6, #4
         BNE     CORRECT_PASSWORD // if KEY #0 not pressed, continue displaying LEDs of correct password
-  5c:	1afffff6 	bne	3c <CORRECT_PASSWORD>
-        B       WAIT            //  if KEY #0 pressed, jump back to wait for load SW combination again
-  60:	eaffffec 	b	18 <WAIT>
+  64:	1afffff4 	bne	3c <CORRECT_PASSWORD>
+        BEQ     UPDATE_PASSWORD
+  68:	0affffff 	beq	6c <UPDATE_PASSWORD>
 
-00000064 <password>:
-  64:	0000009b 	.word	0x0000009b
+0000006c <UPDATE_PASSWORD>:
 
-00000068 <LED_for_correct_password>:
-  68:	aaaaaaaa 	.word	0xaaaaaaaa
-  6c:	ff200000 	.word	0xff200000
-  70:	ff200040 	.word	0xff200040
-  74:	ff200050 	.word	0xff200050
-  78:	05f5e100 	.word	0x05f5e100
+
+
+
+UPDATE_PASSWORD:
+        LDR     R5, [R2]
+  6c:	e5925000 	ldr	r5, [r2]
+        STR     R5, password
+  70:	e58f5000 	str	r5, [pc]	; 78 <password>
+        B       WAIT
+  74:	eaffffe6 	b	14 <WAIT>
+
+00000078 <password>:
+  78:	0000009b 	.word	0x0000009b
+
+0000007c <LED_for_correct_password>:
+  7c:	aaaaaaaa 	.word	0xaaaaaaaa
+  80:	ff200000 	.word	0xff200000
+  84:	ff200040 	.word	0xff200040
+  88:	ff200050 	.word	0xff200050
+  8c:	05f5e100 	.word	0x05f5e100

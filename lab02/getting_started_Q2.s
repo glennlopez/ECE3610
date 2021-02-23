@@ -8,7 +8,7 @@
  * 	1. There is a pre-defined password in memory
  *      2. The program takes input as SW values for guessed password 
  * 	3. ***REMEMBER to press KEY #0 for checking password every time***
- *      4. if SW values match the pre-defined password, LEDs will display for cheering
+ *      4. if SW values match the pre-defined password, LEDs will display for congratulating you
  *      5. if SW values don't match pre-defined password, no LEDs will display
  *      6. Try different combination of SW until guess the correct password      
  *      7. ***REMEMBER to press KEY #0 for checking password every time***

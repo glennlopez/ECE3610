@@ -23,9 +23,9 @@ _start:
 
         MOV     R4, #0          // value for LED displays when incorrect password
         LDR     R11, LED_for_correct_password   // value for LED displays when correct password (#0bAAAAAAAA = 1010... for 32-bit)
-        LDR     R12, password   // value of password stored in memory (#0b10011011)
 
 WAIT:
+        LDR     R12, password   // value of password stored in memory (#0b10011011)
         LDR     R5, [R2]        // load SW to processor's register
         LDR     R6, [R3]        // load KEY to processor's register
 
@@ -41,7 +41,7 @@ CHECK_PASSWORD:
 
 //display LED to indicate correct password
 CORRECT_PASSWORD:
-        STR     R11, [R1]       // store a pre-defined pattern to the LED displays
+        STR     R11, [R1]       // store a pre-defined pattern R11 to the LED displays [R1]
         ROR     R11, #1         // rotate LEDs to the right by 1
 
         LDR     R6, =100000000   // delay counter        
@@ -50,11 +50,20 @@ DELAY:
         SUBS    R6, R6, #1      
         BNE     DELAY           
 
-        LDR     R6, [R3]        
-        CMP     R6, #1          // check if KEY #0 is pressed          
+        LDR     R6, [R3]        // load current value of SW back to R6 in processor
+        CMP     R6, #1
+        BEQ     WAIT            //  if KEY #0 pressed, jump back to wait for load SW combination again
+        CMP     R6, #4          // check if KEY #3 is pressed          
         BNE     CORRECT_PASSWORD // if KEY #0 not pressed, continue displaying LEDs of correct password
-        B       WAIT            //  if KEY #0 pressed, jump back to wait for load SW combination again
+        BEQ     UPDATE_PASSWORD
 
+
+
+
+UPDATE_PASSWORD:
+        LDR     R5, [R2]
+        STR     R5, password
+        B       WAIT
 
 
 password:
