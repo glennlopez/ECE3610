@@ -1,0 +1,162 @@
+
+C:/Users/ngocp/OneDrive/Documents/Github/ECE3610/lab02/getting_started.axf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <__cs3_interrupt_vector>:
+ ********************************************************************************/
+.text        /* executable code follows */
+.global     _start 
+_start:                         
+
+        MOV     R0, #31         // used to rotate a bit pattern: 31 positions to the
+   0:	e3a0001f 	mov	r0, #31
+                                // right is equivalent to 1 position to the left
+        LDR     R1, =LED_BASE   // base address of LED lights
+   4:	e59f10b8 	ldr	r1, [pc, #184]	; c4 <LED_bits+0x4>
+        LDR     R2, =SW_BASE    // base address of SW switches
+   8:	e59f20b8 	ldr	r2, [pc, #184]	; c8 <LED_bits+0x8>
+        LDR     R3, =KEY_BASE   // base address of KEY pushbuttons
+   c:	e59f30b8 	ldr	r3, [pc, #184]	; cc <LED_bits+0xc>
+        LDR     R4, LED_bits    // load original start-up pattern to LED displays
+  10:	e59f40a8 	ldr	r4, [pc, #168]	; c0 <LED_bits>
+        LDR     R7, LED_bits    // load original start-up pattern to a register for reload to LED displays later
+  14:	e59f70a4 	ldr	r7, [pc, #164]	; c0 <LED_bits>
+
+00000018 <DO_DISPLAY>:
+
+DO_DISPLAY:                     
+        LDR     R5, [R2]        // load SW switches
+  18:	e5925000 	ldr	r5, [r2]
+        LDR     R6, [R3]        // load pushbutton keys
+  1c:	e5936000 	ldr	r6, [r3]
+
+        @ CMP     R6, #0          // check if no keys is presssed
+        @ BEQ     WAIT      
+        CMP     R6, #1          // check if key #0 is presssed
+  20:	e3560001 	cmp	r6, #1
+        BEQ     BUTTON_0       
+  24:	0a00000a 	beq	54 <BUTTON_0>
+        CMP     R6, #2          // check if key #1 is presssed
+  28:	e3560002 	cmp	r6, #2
+        BEQ     BUTTON_1       
+  2c:	0a00000c 	beq	64 <BUTTON_1>
+        CMP     R6, #4          // check if key #2 is presssed
+  30:	e3560004 	cmp	r6, #4
+        BEQ     BUTTON_2       
+  34:	0a000011 	beq	80 <BUTTON_2>
+        CMP     R6, #8          // check if key #3 is presssed
+  38:	e3560008 	cmp	r6, #8
+        BEQ     BUTTON_3       
+  3c:	0a000017 	beq	a0 <BUTTON_3>
+
+00000040 <WAIT>:
+  
+WAIT:
+        STR     R4, [R1]        // store CURRENT pattern to the LED displays
+  40:	e5814000 	str	r4, [r1]
+        LDR     R6, [R3]        // load pushbuttons
+  44:	e5936000 	ldr	r6, [r3]
+        CMP     R6, #0          
+  48:	e3560000 	cmp	r6, #0
+        BEQ     WAIT            // wait for any key to be pressed
+  4c:	0afffffb 	beq	40 <WAIT>
+        BNE     DO_DISPLAY
+  50:	1afffff0 	bne	18 <DO_DISPLAY>
+
+00000054 <BUTTON_0>:
+
+
+//if key #0 is pressed, rotate the pattern to the right and stores/shows on LED display
+BUTTON_0:                      
+        STR     R4, [R1]        // store pattern to the LED displays
+  54:	e5814000 	str	r4, [r1]
+        ROR     R4, #1          // rotate the displayed pattern to the right by 1
+  58:	e1a040e4 	ror	r4, r4, #1
+
+        LDR     R6, =50000000   // delay counter        
+  5c:	e59f606c 	ldr	r6, [pc, #108]	; d0 <LED_bits+0x10>
+        B       DELAY
+  60:	ea000003 	b	74 <DELAY>
+
+00000064 <BUTTON_1>:
+
+//if key #1 is pressed, rotate the pattern to the left and stores/shows on LED display
+BUTTON_1:                      
+        STR     R4, [R1]        // store pattern to the LED displays
+  64:	e5814000 	str	r4, [r1]
+        ROR     R4, R0          // rotate the displayed pattern to the left by 1
+  68:	e1a04074 	ror	r4, r4, r0
+
+        LDR     R6, =50000000   // delay counter        
+  6c:	e59f605c 	ldr	r6, [pc, #92]	; d0 <LED_bits+0x10>
+        B       DELAY
+  70:	eaffffff 	b	74 <DELAY>
+
+00000074 <DELAY>:
+
+DELAY:                          
+        SUBS    R6, R6, #1      
+  74:	e2566001 	subs	r6, r6, #1
+        BNE     DELAY           
+  78:	1afffffd 	bne	74 <DELAY>
+
+        B       DO_DISPLAY      
+  7c:	eaffffe5 	b	18 <DO_DISPLAY>
+
+00000080 <BUTTON_2>:
+
+//if key #2 is pressed, update the new pattern 
+BUTTON_2:
+        MOV     R4, R5          // copy SW switch values onto LED displays
+  80:	e1a04005 	mov	r4, r5
+        ROR     R5, R5, #8      // the SW values are copied into the upper three
+  84:	e1a05465 	ror	r5, r5, #8
+                                // bytes of the pattern register
+        ORR     R4, R4, R5      // needed to make pattern consistent as all 32-bits
+  88:	e1844005 	orr	r4, r4, r5
+                                // of a register are rotated
+        ROR     R5, R5, #8      // but only the lowest 8-bits are displayed on LEDs
+  8c:	e1a05465 	ror	r5, r5, #8
+        ORR     R4, R4, R5      
+  90:	e1844005 	orr	r4, r4, r5
+        ROR     R5, R5, #8      
+  94:	e1a05465 	ror	r5, r5, #8
+        ORR     R4, R4, R5      
+  98:	e1844005 	orr	r4, r4, r5
+
+        B       DO_DISPLAY
+  9c:	eaffffdd 	b	18 <DO_DISPLAY>
+
+000000a0 <BUTTON_3>:
+
+
+//if key #3 is pressed, update the start-up pattern 
+BUTTON_3:
+        MOV     R4, R7          // copy start-up pattern onto LED displays
+  a0:	e1a04007 	mov	r4, r7
+        ROR     R7, R7, #8      // the start-up pattern is copied into the upper three
+  a4:	e1a07467 	ror	r7, r7, #8
+                                // bytes of the pattern register
+        ORR     R4, R4, R7      // needed to make pattern consistent as all 32-bits
+  a8:	e1844007 	orr	r4, r4, r7
+                                // of a register are rotated
+        ROR     R7, R7, #8      // but only the lowest 8-bits are displayed on LEDs
+  ac:	e1a07467 	ror	r7, r7, #8
+        ORR     R4, R4, R7      
+  b0:	e1844007 	orr	r4, r4, r7
+        ROR     R7, R7, #8      
+  b4:	e1a07467 	ror	r7, r7, #8
+        ORR     R4, R4, R7
+  b8:	e1844007 	orr	r4, r4, r7
+
+        B       DO_DISPLAY
+  bc:	eaffffd5 	b	18 <DO_DISPLAY>
+
+000000c0 <LED_bits>:
+  c0:	0f0f0f0f 	.word	0x0f0f0f0f
+  c4:	ff200000 	.word	0xff200000
+  c8:	ff200040 	.word	0xff200040
+  cc:	ff200050 	.word	0xff200050
+  d0:	02faf080 	.word	0x02faf080
