@@ -44,7 +44,7 @@ CORRECT_PASSWORD:
         STR     R11, [R1]       // store a pre-defined pattern to the LED displays
         ROR     R11, #1         // rotate LEDs to the right by 1
 
-        LDR     R6, =100000000   // delay counter        
+        LDR     R6, =50000000   // delay counter        
         B       DELAY
 DELAY:                          
         SUBS    R6, R6, #1      
