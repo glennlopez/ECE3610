@@ -103,15 +103,15 @@ LED_bits:
 
 .end         
 /*
-PC      | #31       
-r0      | LED address
-r1      | SW address
-r2      | KEY address
-r3      | LED values
-r4      | SW values
-r5      | KEY values & =50KK delay
+PC      |        
+r0      | #31
+r1      | LED address
+r2      | SW address
+r3      | KEY address
+r4      | LED values
+r5      | SW values
 ----------------------
-r6      |
+r6      | KEY values & =50KK delay
 r7      |
 r8      |
 r9      |
