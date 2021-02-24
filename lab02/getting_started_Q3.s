@@ -12,7 +12,7 @@
  *      5. if SW values don't match pre-defined password, no LEDs will display
  *      6. Try different combination of SW until guess the correct password      
  *      7. ***REMEMBER to press KEY #0 for checking password every time***
- *      8. Once the current password is guessed successfully, user can now modify the password to different parttern (combination of SWs)
+ *      8. Once the current password is guessed successfully, user can now modify the password to different pattern (combination of SWs)
  *      9. Modify by: change to new combination of SWs, press KEY #2 for saving password
  *      10. Now if use the old password, press KEY #0 won't work. Only new password will work
  ********************************************************************************/
