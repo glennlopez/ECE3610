@@ -61,9 +61,9 @@ DELAY:
         BEQ     UPDATE_PASSWORD
 
 UPDATE_PASSWORD:
-        LDR     R5, [R2]        // load R5 (SW) to 
-        STR     R5, password
-        B       WAIT
+        LDR     R5, [R2]        // load R2 (SW) to R5 (SW register)
+        STR     R5, password    // store R5 (SW register) to memory as new password
+        B       WAIT            // return to beginning
 
 
 password:

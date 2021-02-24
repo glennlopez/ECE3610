@@ -102,3 +102,24 @@ LED_bits:
 .word       0x0F0F0F0F 
 
 .end         
+/*
+PC      | #31       
+r0      | LED address
+r1      | SW address
+r2      | KEY address
+r3      | LED values
+r4      | SW values
+r5      | KEY values & =50KK delay
+----------------------
+r6      |
+r7      |
+r8      |
+r9      |
+r10     |
+r11     |
+r12     |
+----------------------
+sp      |
+lr      |
+CPSR    | N  Z  C  V
+*/
