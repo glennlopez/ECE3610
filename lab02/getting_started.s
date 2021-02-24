@@ -16,7 +16,7 @@
 .global     _start 
 _start:                         
 
-        MOV     R0, #31         // used to rotate a bit pattern: 31 positions to the
+        MOV     R0, LED_bits         // used to rotate a bit pattern: 31 positions to the
                                 // right is equivalent to 1 position to the left
         LDR     R1, =LED_BASE   // base address of LED lights
         LDR     R2, =SW_BASE    // base address of SW switches
@@ -108,11 +108,11 @@ r0      | #31
 r1      | LED address
 r2      | SW address
 r3      | KEY address
-r4      | LED values
+r4      | LED values (LED_bits)
 r5      | SW values
 ----------------------
 r6      | KEY values & =50KK delay
-r7      |
+r7      | LED_bits
 r8      |
 r9      |
 r10     |
@@ -122,4 +122,6 @@ r12     |
 sp      |
 lr      |
 CPSR    | N  Z  C  V
+----------------------
+LED_bits| 0x0F0F0F0F
 */
