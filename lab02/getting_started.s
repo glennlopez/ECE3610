@@ -73,3 +73,27 @@ LED_for_correct_password:       // LEDs display for correct password
 .word       0xAAAAAAAA
 
 .end         
+/*
+PC      |        
+r0      | 
+r1      | LED address
+r2      | SW address
+r3      | KEY address
+r4      | #0
+r5      | SW values
+----------------------
+r6      | KEY values & =50KK delay
+r7      |
+r8      |
+r9      |
+r10     |
+r11     | LED_pw
+r12     | password
+----------------------
+sp      |
+lr      |
+CPSR    | N  Z  C  V
+----------------------
+passwod | 0x0000009B
+LED_pw  | 0xAAAAAAAA
+*/

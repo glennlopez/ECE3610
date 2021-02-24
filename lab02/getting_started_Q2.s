@@ -66,15 +66,15 @@ LED_for_correct_password:       // LEDs display for correct password
 .end    
 
 /*
-PC      | #31       
-r0      | LED address
-r1      | SW address
-r2      | KEY address
-r3      | #0
-r4      | SW values
-r5      | KEY values & =50KK delay
+PC      |        
+r0      | 
+r1      | LED address
+r2      | SW address
+r3      | KEY address
+r4      | #0
+r5      | SW values
 ----------------------
-r6      |
+r6      | KEY values & =50KK delay
 r7      |
 r8      |
 r9      |
