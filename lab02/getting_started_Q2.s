@@ -34,7 +34,7 @@ WAIT:
         BNE     WAIT
 
 CHECK_PASSWORD:
-        CMP     R5, R12        // check R4 (SW) with R5 (password in memory #0b10011011)
+        CMP     R5, R12        // check R5 (SW) with R12 (password in memory #0b10011011)
         BEQ     CORRECT_PASSWORD //jump to correct_password
         STR     R4, [R1]        // incorrect password, no LEDs (#0)
         BNE     WAIT            // loop back to check for SW combination

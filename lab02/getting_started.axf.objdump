@@ -25,7 +25,7 @@ _start:
 00000014 <WAIT>:
 
 WAIT:
-        LDR     R12, password   // value of password stored in memory (#0b10011011)
+        LDR     R12, password   // value of password stored in memory (#0b10011011), or new password if user modifies it (after input correct current password)
   14:	e59fc05c 	ldr	r12, [pc, #92]	; 78 <password>
         LDR     R5, [R2]        // load SW to processor's register
   18:	e5925000 	ldr	r5, [r2]
@@ -60,8 +60,8 @@ CORRECT_PASSWORD:
         ROR     R11, #1         // rotate LEDs to the right by 1
   40:	e1a0b0eb 	ror	r11, r11, #1
 
-        LDR     R6, =100000000   // delay counter        
-  44:	e59f6040 	ldr	r6, [pc, #64]	; 8c <LED_for_correct_password+0x10>
+        LDR     R6, =1   // delay counter        
+  44:	e3a06001 	mov	r6, #1
         B       DELAY
   48:	eaffffff 	b	4c <DELAY>
 
@@ -74,7 +74,7 @@ DELAY:
 
         LDR     R6, [R3]        // load current value of SW back to R6 in processor
   54:	e5936000 	ldr	r6, [r3]
-        CMP     R6, #1
+        CMP     R6, #1          // check if KEY #0 is pressed
   58:	e3560001 	cmp	r6, #1
         BEQ     WAIT            //  if KEY #0 pressed, jump back to wait for load SW combination again
   5c:	0affffec 	beq	14 <WAIT>
@@ -87,11 +87,8 @@ DELAY:
 
 0000006c <UPDATE_PASSWORD>:
 
-
-
-
 UPDATE_PASSWORD:
-        LDR     R5, [R2]
+        LDR     R5, [R2]        // load R5 (sto)
   6c:	e5925000 	ldr	r5, [r2]
         STR     R5, password
   70:	e58f5000 	str	r5, [pc]	; 78 <password>
@@ -106,4 +103,3 @@ UPDATE_PASSWORD:
   80:	ff200000 	.word	0xff200000
   84:	ff200040 	.word	0xff200040
   88:	ff200050 	.word	0xff200050
-  8c:	05f5e100 	.word	0x05f5e100
