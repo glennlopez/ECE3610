@@ -2,7 +2,7 @@
 
 /********************************************************************************
  * Student: Ngoc Pham
- * ECE 3610 - Lab02 Q2
+ * ECE 3610 - Lab02 Q3
  *
  * It performs the following:
  * 	1. There is a pre-defined password in memory
