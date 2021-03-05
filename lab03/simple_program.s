@@ -2,8 +2,9 @@
 
 .text                       
 .global     _start          
+@ .equ        STACK_BASE, 0x30000000
 _start: 
-        LDR     R1, =LED_BASE  /* Address of red LEDs. */
+        LDR     R1, =LED_BASE   /* Address of red LEDs. */
         LDR     R2, =SW_BASE    /* Address of switches. */
         LDR     R3, =HEX3_HEX0_BASE /* Address of the low four 7segment digits */ 
         LDR     R4, =HEX5_HEX4_BASE /* Address of the high two 7segment digits */
@@ -11,41 +12,68 @@ _start:
 LOOP:   
         LDRB    R5, [R2]        /* Read the state of switches, last 4 switches only, corresponding 0-9 */
         BL      BinaryDecoder
-        STRB    R6, [R3]        /* Display the state on 7segment. */
-        STRB    R6, [R4]        /* Display the state on 7segment. */
+        STR     R6, [R3]        /* Display the state on 7segment. Whole 32-bit for HEX3_HEX0 */
+        STR     R6, [R4]        /* Display the state on 7segment. Whole 32-bit for HEX5_HEX4 */
         B       LOOP            
 
-BinaryDecoder
+BinaryDecoder:
         CMP     R5, #0
-        MOVEQ   R6, #0b00011111
+        LDREQ   R6, zero_display        /* 0b00111111 = 0x3F : displaying 0 */
 
         CMP     R5, #1
-        MOVEQ   R6, #0b000000110
+        LDREQ   R6, one_display         /* 0b00000110 = 0x06 : displaying 1 */
 
         CMP     R5, #2
-        MOVEQ   R6, #0b001011011
+        LDREQ   R6, two_display         /* 0b01011011 = 0x5B : displaying 2 */
 
         CMP     R5, #3
-        MOVEQ   R6, #0b001001111
+        LDREQ   R6, three_display       /* 0b01001111 = 0x4F : displaying 3 */
 
         CMP     R5, #4
-        MOVEQ   R6, #0b001100110
+        LDREQ   R6, four_display        /* 0b01100110 = 0x66 : displaying 4 */
 
         CMP     R5, #5
-        MOVEQ   R6, #0b001101101
+        LDREQ   R6, five_display        /* 0b01101101 = 0x6D : displaying 5 */
         
         CMP     R5, #6
-        MOVEQ   R6, #0b001111101
+        LDREQ   R6, six_display         /* 0b01111101 = 0x7D : displaying 6 */
 
         CMP     R5, #7
-        MOVEQ   R6, #0b000000111
+        LDREQ   R6, seven_display       /* 0b00000111 = 0x07 : displaying 7 */
 
         CMP     R5, #8
-        MOVEQ   R6, #0b001111111
+        LDREQ   R6, eight_display       /* 0b01111111 = 0x7F : displaying 8 */
 
-        CMP     R5, #9
-        MOVEQ   R6, #0b001101111
+        CMP     R5, #9                  
+        LDREQ   R6, nine_display        /* 0b01101111 = 0x67 :displaying 9 */
+
+        SUBS    R5, R5, #9              /* any number greater than 9, subtract to 9 will be > 9, then displaying "-" for error */
+        LDRGT   R6, dash_display        /* 0b01000000 = 0x40 : displaying - (dash) */     
 
         MOV     PC, R14
+
+zero_display:
+.word   0x3F3F3F3F      /* 0b00111111 = 0x3F : displaying 0 */
+one_display:
+.word   0x06060606      /* 0b00000110 = 0x06 : displaying 1 */
+two_display:
+.word   0x5B5B5B5B      /* 0b01011011 = 0x5B : displaying 2 */
+three_display:
+.word   0x4F4F4F4F      /* 0b01001111 = 0x4F : displaying 3 */
+four_display:
+.word   0x66666666      /* 0b01100110 = 0x66 : displaying 4 */
+five_display:
+.word   0x6D6D6D6D      /* 0b01101101 = 0x6D : displaying 5 */
+six_display:
+.word   0x7D7D7D7D      /* 0b01111101 = 0x7D : displaying 6 */
+seven_display:
+.word   0x07070707      /* 0b00000111 = 0x07 : displaying 7 */
+eight_display:
+.word   0x7F7F7F7F      /* 0b01111111 = 0x7F : displaying 8 */
+nine_display:
+.word   0x67676767      /* 0b01101111 = 0x67 : displaying 9 */
+dash_display:
+.word   0x40404040      /* 0b01000000 = 0x40 : displaying - (dash) */
+
 
 .end                        
