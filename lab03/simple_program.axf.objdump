@@ -1,0 +1,36 @@
+
+C:/Users/ngocp/OneDrive/Documents/Github/ECE3610/lab03/simple_program.axf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <__cs3_interrupt_vector>:
+.include    "address_map_arm.s"
+
+.text                       
+.global     _start          
+_start: 
+        LDR     R1, =LED_BASE  /* Address of red LEDs. */
+   0:	e59f1018 	ldr	r1, [pc, #24]	; 20 <ICCEOIR+0x10>
+        LDR     R2, =SW_BASE    /* Address of switches. */
+   4:	e59f2018 	ldr	r2, [pc, #24]	; 24 <ICCEOIR+0x14>
+        LDR     R3, =HEX3_HEX0_BASE /* Address of the low four 7segment digits */ 
+   8:	e59f3018 	ldr	r3, [pc, #24]	; 28 <ICCEOIR+0x18>
+        LDR     R4, =HEX5_HEX4_BASE /* Address of the high two 7segment digits */
+   c:	e59f4018 	ldr	r4, [pc, #24]	; 2c <ICCEOIR+0x1c>
+
+00000010 <LOOP>:
+
+LOOP:   
+        LDR     R5, [R2]        /* Read the state of switches. */
+  10:	e5925000 	ldr	r5, [r2]
+        STR     R5, [R3]        /* Display the state on 7segment. */
+  14:	e5835000 	str	r5, [r3]
+        STR     R5, [R4]        /* Display the state on 7segment. */
+  18:	e5845000 	str	r5, [r4]
+        B       LOOP            
+  1c:	eafffffb 	b	10 <LOOP>
+  20:	ff200000 	.word	0xff200000
+  24:	ff200040 	.word	0xff200040
+  28:	ff200020 	.word	0xff200020
+  2c:	ff200030 	.word	0xff200030
