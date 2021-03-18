@@ -1,0 +1,40 @@
+
+C:/Users/ngocp/OneDrive/Documents/Github/ECE3610/testground/simple_program.axf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <__cs3_interrupt_vector>:
+_start: 
+        @ LDR     R0, =0xFFFFFFFF
+        @ LDR     R1, =0x03F00000
+        @ LDR     R2, =0x11223344
+        @ LDR     R4, =0xABCDEF00
+        LDR     SP, =0x00010000
+   0:	e3a0d801 	mov	sp, #65536	; 0x10000
+@ SET:
+@ 	LDR     r0, =0xFFFFFFFF
+@ 	B       EXIT                            
+@ EXIT:
+
+        MOV     r0, #0
+   4:	e3a00000 	mov	r0, #0
+        MOV     r1, #6
+   8:	e3a01006 	mov	r1, #6
+
+0000000c <LOOP>:
+LOOP:
+        LDR     r2,[SP]
+   c:	e59d2000 	ldr	r2, [sp]
+        LDR     r3,[SP],#4
+  10:	e49d3004 	pop	{r3}		; (ldr r3, [sp], #4)
+        LSRS    r3,r3,#1
+  14:	e1b030a3 	lsrs	r3, r3, #1
+        ADDCS   r0,r0,r2
+  18:	20800002 	addcs	r0, r0, r2
+        SUBS    r1,r1,#1
+  1c:	e2511001 	subs	r1, r1, #1
+        BEQ     EXIT
+  20:	0a000000 	beq	28 <EXIT>
+        BNE     LOOP
+  24:	1afffff8 	bne	c <LOOP>
