@@ -12,16 +12,16 @@ _start:
 
 LOOP:   
         LDRB    R5, [R2]        /* Read the state of switches, last 4 switches only, corresponding 0-9 */
-        STMFA   SP!, {R5, PC}   /* 1> push on the stack (in memory, hence "STM") the switch state, and return address */
+        STMIA   SP!, {R5, PC}   /* 1> push on the stack (in memory, hence "STM") the switch state, and return address */
         B       BinaryDecoder
         @ LDR     R6, [SP,#4]!   /* 5> load to R6 the display pattern (same function as " LDMEA   SP!, {R6} ")*/
-        LDMFA   SP!, {R6}       /* 5> pop the 7-segment display pattern off the stack (to processor r6) */
+        LDMDB   SP!, {R6}       /* 5> pop the 7-segment display pattern off the stack (to processor r6) */
         STR     R6, [R3]        /* 6> Display the state on 7segment. Whole 32-bit for HEX3_HEX0 */
         STR     R6, [R4]        /* 7> Display the state on 7segment. Whole 32-bit for HEX5_HEX4 */
         B       LOOP            
 
 BinaryDecoder:
-        LDMFA   SP!, {R9, R5, R7}           /* 2> pop the switch value and return value off the stack (to processor at R5, R7) */
+        LDMDB   SP!, {R5, R7}           /* 2> pop the switch value and return value off the stack (to processor at R5, R7) */
 
         CMP     R5, #0
         LDREQ   R6, =0x3F3F3F3F        /* 0b00111111 = 0x3F : displaying 0 */
@@ -56,7 +56,7 @@ BinaryDecoder:
         CMP     R5, #9                  /* any number greater than 9, subtract to 9 will be > 9, then displaying "-" for error */
         LDRGT   R6, =0x40404040         /* 0b01000000 = 0x40 : displaying - (dash) */     
 
-        STMFA   SP!, {R6}            /* 3> push the 7-segment display pattern onto the stack */
+        STMIA   SP!, {R6}            /* 3> push the 7-segment display pattern onto the stack */
         MOV     PC, R7           /* 4> setting the program counter to the return address (exit subroutine) */
 
 

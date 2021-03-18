@@ -26,13 +26,13 @@ _start:
 LOOP:   
         LDRB    R5, [R2]        /* Read the state of switches, last 4 switches only, corresponding 0-9 */
   14:	e5d25000 	ldrb	r5, [r2]
-        STMIA   SP!, {R5, PC}   /* 1> push on the stack (in memory, hence "STM") the switch state, and return address */
-  18:	e8ad8020 	stmia	sp!, {r5, pc}
+        STMFA   SP!, {R5, PC}   /* 1> push on the stack (in memory, hence "STM") the switch state, and return address */
+  18:	e9ad8020 	stmib	sp!, {r5, pc}
         B       BinaryDecoder
   1c:	ea000003 	b	30 <BinaryDecoder>
         @ LDR     R6, [SP,#4]!   /* 5> load to R6 the display pattern (same function as " LDMEA   SP!, {R6} ")*/
-        LDMDB   SP!, {R6}       /* 5> pop the 7-segment display pattern off the stack (to processor r6) */
-  20:	e93d0040 	ldmdb	sp!, {r6}
+        LDMFA   SP!, {R6}       /* 5> pop the 7-segment display pattern off the stack (to processor r6) */
+  20:	e83d0040 	ldmda	sp!, {r6}
         STR     R6, [R3]        /* 6> Display the state on 7segment. Whole 32-bit for HEX3_HEX0 */
   24:	e5836000 	str	r6, [r3]
         STR     R6, [R4]        /* 7> Display the state on 7segment. Whole 32-bit for HEX5_HEX4 */
@@ -43,8 +43,8 @@ LOOP:
 00000030 <BinaryDecoder>:
 
 BinaryDecoder:
-        LDMDB   SP!, {R5, R7}           /* 2> pop the switch value and return value off the stack (to processor at R5, R7) */
-  30:	e93d00a0 	ldmdb	sp!, {r5, r7}
+        LDMFA   SP!, {R9, R5, R7}           /* 2> pop the switch value and return value off the stack (to processor at R5, R7) */
+  30:	e83d02a0 	ldmda	sp!, {r5, r7, r9}
 
         CMP     R5, #0
   34:	e3550000 	cmp	r5, #0
@@ -101,8 +101,8 @@ BinaryDecoder:
         LDRGT   R6, =0x40404040         /* 0b01000000 = 0x40 : displaying - (dash) */     
   88:	c59f603c 	ldrgt	r6, [pc, #60]	; cc <BinaryDecoder+0x9c>
 
-        STMIA   SP!, {R6}            /* 3> push the 7-segment display pattern onto the stack */
-  8c:	e8ad0040 	stmia	sp!, {r6}
+        STMFA   SP!, {R6}            /* 3> push the 7-segment display pattern onto the stack */
+  8c:	e9ad0040 	stmib	sp!, {r6}
         MOV     PC, R7           /* 4> setting the program counter to the return address (exit subroutine) */
   90:	e1a0f007 	mov	pc, r7
   94:	ff200000 	.word	0xff200000

@@ -1,0 +1,339 @@
+
+C:/Users/ngocp/OneDrive/Documents/Github/ECE3610/lab04/simple_program.axf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <__cs3_interrupt_vector>:
+
+.text                       
+.global     _start          
+.equ    STACK_BASE, 0x30000000
+_start: 
+        LDR     R1, =KEY_BASE           /* Address of KEY pushbuttons */ 
+   0:	e59f11cc 	ldr	r1, [pc, #460]	; 1d4 <WAIT+0x10>
+        LDR     R2, =SW_BASE            /* Address of switches. */
+   4:	e59f21cc 	ldr	r2, [pc, #460]	; 1d8 <WAIT+0x14>
+        LDR     R3, =HEX3_HEX0_BASE     /* Address of the low four 7segment digits */ 
+   8:	e59f31cc 	ldr	r3, [pc, #460]	; 1dc <WAIT+0x18>
+        LDR     R4, =HEX5_HEX4_BASE     /* Address of the high two 7segment digits */
+   c:	e59f41cc 	ldr	r4, [pc, #460]	; 1e0 <WAIT+0x1c>
+        LDR     SP, =STACK_BASE
+  10:	e3a0d203 	mov	sp, #805306368	; 0x30000000
+
+@ for keeping track of stack counter
+        LDR     R0, =0
+  14:	e3a00000 	mov	r0, #0
+
+00000018 <LOOP>:
+
+LOOP:   
+@ for decoding 10 switches value to 4 of 7segment displays   
+@ read in the state of switches, R5 = state of 10 switches = last 3 hex */
+
+        LDR     R5, [R2]        /* for number rotation to display on SSD*/
+  18:	e5925000 	ldr	r5, [r2]
+
+@ for checking if KEY is pressed
+        LDR     R12, [R1]       /* Read the state of key */
+  1c:	e591c000 	ldr	r12, [r1]
+
+
+        CMP     R12, #1         
+  20:	e35c0001 	cmp	r12, #1
+        BLEQ    STORE
+  24:	0b000006 	bleq	44 <STORE>
+
+        CMP     R12, #2
+  28:	e35c0002 	cmp	r12, #2
+        BLEQ    CLEAR
+  2c:	0b00000e 	bleq	6c <CLEAR>
+
+        CMP     R12, #4
+  30:	e35c0004 	cmp	r12, #4
+        BLEQ    ADDITION
+  34:	0b000016 	bleq	94 <ADDITION>
+
+        CMP     R12, #8
+  38:	e35c0008 	cmp	r12, #8
+        BLEQ    SUBTRACTION
+  3c:	0b000020 	bleq	c4 <SUBTRACTION>
+
+        B       LOOP     
+  40:	eafffff4 	b	18 <LOOP>
+
+00000044 <STORE>:
+
+STORE:
+        MOV     R11, LR
+  44:	e1a0b00e 	mov	r11, lr
+        BL      WAIT
+  48:	eb00005d 	bl	1c4 <WAIT>
+
+        STMFD   SP!,{R5}        /* update current switch values to 7segment */
+  4c:	e92d0020 	stmfd	sp!, {r5}
+        BL      ROTATION
+  50:	eb000027 	bl	f4 <ROTATION>
+        STR     R8, [R3]
+  54:	e5838000 	str	r8, [r3]
+
+        ADD     R0, R0, #1      /* increment stack counter */
+  58:	e2800001 	add	r0, r0, #1
+        MOV     R6, R0          /* update stack counter on 7segment */
+  5c:	e1a06000 	mov	r6, r0
+        BL      BinaryDecoder
+  60:	eb000036 	bl	140 <BinaryDecoder>
+        STR     R7, [R4]
+  64:	e5847000 	str	r7, [r4]
+
+        MOV     PC, R11         /* exit STORE routine */
+  68:	e1a0f00b 	mov	pc, r11
+
+0000006c <CLEAR>:
+
+CLEAR:
+        MOV     R11, LR
+  6c:	e1a0b00e 	mov	r11, lr
+        BL      WAIT
+  70:	eb000053 	bl	1c4 <WAIT>
+        
+        LDR     R0, =0          /* reset stack counter */  
+  74:	e3a00000 	mov	r0, #0
+        MOV     R6, R0
+  78:	e1a06000 	mov	r6, r0
+        BL      BinaryDecoder
+  7c:	eb00002f 	bl	140 <BinaryDecoder>
+        STR     R7, [R4]
+  80:	e5847000 	str	r7, [r4]
+        
+        LDR     SP, =STACK_BASE /* reset stack base */
+  84:	e3a0d203 	mov	sp, #805306368	; 0x30000000
+        
+        LDR     R8, =0x40404040 /* 0b01000000 = 0x40 : displaying - (dash) */
+  88:	e59f8154 	ldr	r8, [pc, #340]	; 1e4 <WAIT+0x20>
+        STR     R8, [R3]        /* reset 7segment */
+  8c:	e5838000 	str	r8, [r3]
+
+        MOV     PC, R11         /* exit CLEAR routine */
+  90:	e1a0f00b 	mov	pc, r11
+
+00000094 <ADDITION>:
+
+ADDITION:
+        MOV     R11, LR
+  94:	e1a0b00e 	mov	r11, lr
+        BL      WAIT
+  98:	eb000049 	bl	1c4 <WAIT>
+
+        SUB     R0, R0, #1      /* decrement stack counter */
+  9c:	e2400001 	sub	r0, r0, #1
+        MOV     R6, R0
+  a0:	e1a06000 	mov	r6, r0
+        BL      BinaryDecoder
+  a4:	eb000025 	bl	140 <BinaryDecoder>
+        STR     R7, [R4]
+  a8:	e5847000 	str	r7, [r4]
+
+        LDMFD   SP!, {R9, R10}
+  ac:	e8bd0600 	pop	{r9, r10}
+        ADD     R5, R10, R9
+  b0:	e08a5009 	add	r5, r10, r9
+        STMFD   SP!, {R5}
+  b4:	e92d0020 	stmfd	sp!, {r5}
+
+        BL      ROTATION
+  b8:	eb00000d 	bl	f4 <ROTATION>
+        STR     R8, [R3]
+  bc:	e5838000 	str	r8, [r3]
+
+        MOV     PC, R11         /* exit ADDITION routine */
+  c0:	e1a0f00b 	mov	pc, r11
+
+000000c4 <SUBTRACTION>:
+
+SUBTRACTION:
+        MOV     R11, LR
+  c4:	e1a0b00e 	mov	r11, lr
+        BL      WAIT
+  c8:	eb00003d 	bl	1c4 <WAIT>
+
+        SUB     R0, R0, #1      /* decrement stack counter */
+  cc:	e2400001 	sub	r0, r0, #1
+        MOV     R6, R0
+  d0:	e1a06000 	mov	r6, r0
+        BL      BinaryDecoder
+  d4:	eb000019 	bl	140 <BinaryDecoder>
+        STR     R7, [R4]
+  d8:	e5847000 	str	r7, [r4]
+
+        LDMFD   SP!, {R9, R10}
+  dc:	e8bd0600 	pop	{r9, r10}
+        SUB     R5, R10, R9
+  e0:	e04a5009 	sub	r5, r10, r9
+        STMFD   SP!, {R5}
+  e4:	e92d0020 	stmfd	sp!, {r5}
+
+        BL      ROTATION
+  e8:	eb000001 	bl	f4 <ROTATION>
+        STR     R8, [R3]        
+  ec:	e5838000 	str	r8, [r3]
+
+        MOV     PC, R11         /* exit SUBTRACTION routine */
+  f0:	e1a0f00b 	mov	pc, r11
+
+000000f4 <ROTATION>:
+
+ROTATION:
+        MOV     R10, LR
+  f4:	e1a0a00e 	mov	r10, lr
+
+        AND     R6, R5, #0x0000000F     /* extract 4-LSB, R7 = current state of last 4 switches */
+  f8:	e205600f 	and	r6, r5, #15
+        BL      BinaryDecoder   /* Decode state of 4 switches R7 to 7segment pattern, R6 = 7segment pattern */
+  fc:	eb00000f 	bl	140 <BinaryDecoder>
+        ORR     R8, R7, #0      /* store current 7segment pattern */      
+ 100:	e3878000 	orr	r8, r7, #0
+
+        BL      NEXT_FOUR_BITS  /* Jump to routine to extract next 4 switches*/
+ 104:	eb000009 	bl	130 <NEXT_FOUR_BITS>
+        BL      BinaryDecoder   /* Jump to routine to decode next 4 switches to 7segment*/
+ 108:	eb00000c 	bl	140 <BinaryDecoder>
+        ORR     R8, R8, R7      /* store current to 32 bits pattern of 4 of 7segment displays */
+ 10c:	e1888007 	orr	r8, r8, r7
+
+        BL      NEXT_FOUR_BITS  /* Jump to routine to extract next 4 switches*/
+ 110:	eb000006 	bl	130 <NEXT_FOUR_BITS>
+        BL      BinaryDecoder   /* Jump to routine to decode next 4 switches to 7segment*/
+ 114:	eb000009 	bl	140 <BinaryDecoder>
+        ORR     R8, R8, R7
+ 118:	e1888007 	orr	r8, r8, r7
+
+        BL      NEXT_FOUR_BITS
+ 11c:	eb000003 	bl	130 <NEXT_FOUR_BITS>
+        BL      BinaryDecoder   /* Jump to routine to decode next 4 switches to 7segment*/
+ 120:	eb000006 	bl	140 <BinaryDecoder>
+        ORR     R8, R8, R7      
+ 124:	e1888007 	orr	r8, r8, r7
+
+        BL      NEXT_FOUR_BITS
+ 128:	eb000000 	bl	130 <NEXT_FOUR_BITS>
+
+        MOV     PC, R10         /* exit ROTATION routine */
+ 12c:	e1a0f00a 	mov	pc, r10
+
+00000130 <NEXT_FOUR_BITS>:
+
+
+NEXT_FOUR_BITS:
+        ROR     R5, R5, #4              /* Rotate to next 4 switches*/
+ 130:	e1a05265 	ror	r5, r5, #4
+        AND     R6, R5, #0x0000000F     /* Extract 4 bits */
+ 134:	e205600f 	and	r6, r5, #15
+        ROR     R8, R8, #8              /* Rotate the final 32 bit pattern of 4 of 7segment displays*/
+ 138:	e1a08468 	ror	r8, r8, #8
+        MOV     PC, LR
+ 13c:	e1a0f00e 	mov	pc, lr
+
+00000140 <BinaryDecoder>:
+
+
+BinaryDecoder:
+        CMP     R6, #0
+ 140:	e3560000 	cmp	r6, #0
+        LDREQ   R7, =0x3F        /* 0b00111111 = 0x3F : displaying 0 */
+ 144:	03a0703f 	moveq	r7, #63	; 0x3f
+
+        CMP     R6, #1
+ 148:	e3560001 	cmp	r6, #1
+        LDREQ   R7, =0x06         /* 0b00000110 = 0x06 : displaying 1 */
+ 14c:	03a07006 	moveq	r7, #6
+
+        CMP     R6, #2
+ 150:	e3560002 	cmp	r6, #2
+        LDREQ   R7, =0x5B         /* 0b01011011 = 0x5B : displaying 2 */
+ 154:	03a0705b 	moveq	r7, #91	; 0x5b
+
+        CMP     R6, #3
+ 158:	e3560003 	cmp	r6, #3
+        LDREQ   R7, =0x4F         /* 0b01001111 = 0x4F : displaying 3 */
+ 15c:	03a0704f 	moveq	r7, #79	; 0x4f
+
+        CMP     R5, #4
+ 160:	e3550004 	cmp	r5, #4
+        LDREQ   R7, =0x66         /* 0b01100110 = 0x66 : displaying 4 */
+ 164:	03a07066 	moveq	r7, #102	; 0x66
+
+        CMP     R6, #5
+ 168:	e3560005 	cmp	r6, #5
+        LDREQ   R7, =0x6D         /* 0b01101101 = 0x6D : displaying 5 */
+ 16c:	03a0706d 	moveq	r7, #109	; 0x6d
+        
+        CMP     R6, #6
+ 170:	e3560006 	cmp	r6, #6
+        LDREQ   R7, =0x7D         /* 0b01111101 = 0x7D : displaying 6 */
+ 174:	03a0707d 	moveq	r7, #125	; 0x7d
+
+        CMP     R6, #7
+ 178:	e3560007 	cmp	r6, #7
+        LDREQ   R7, =0x07         /* 0b00000111 = 0x07 : displaying 7 */
+ 17c:	03a07007 	moveq	r7, #7
+
+        CMP     R6, #8
+ 180:	e3560008 	cmp	r6, #8
+        LDREQ   R7, =0x7F         /* 0b01111111 = 0x7F : displaying 8 */
+ 184:	03a0707f 	moveq	r7, #127	; 0x7f
+
+        CMP     R6, #9                  
+ 188:	e3560009 	cmp	r6, #9
+        LDREQ   R7, =0x67         /* 0b01101111 = 0x67 :displaying 9 */
+ 18c:	03a07067 	moveq	r7, #103	; 0x67
+
+        CMP     R6, #10                 
+ 190:	e356000a 	cmp	r6, #10
+        LDREQ   R7, =0x77         /* 0b01110111 = 0x77: displaying A */
+ 194:	03a07077 	moveq	r7, #119	; 0x77
+
+        CMP     R6, #11                 
+ 198:	e356000b 	cmp	r6, #11
+        LDREQ   R7, =0x7C         /* 0b01111100 = 0x7C: displaying b */
+ 19c:	03a0707c 	moveq	r7, #124	; 0x7c
+
+        CMP     R6, #12                 
+ 1a0:	e356000c 	cmp	r6, #12
+        LDREQ   R7, =0x39         /* 0b00111001 = 0x39: displaying C */
+ 1a4:	03a07039 	moveq	r7, #57	; 0x39
+
+        CMP     R6, #13                 
+ 1a8:	e356000d 	cmp	r6, #13
+        LDREQ   R7, =0x5E         /* 0b01011110 = 0x5E: displaying d */
+ 1ac:	03a0705e 	moveq	r7, #94	; 0x5e
+
+        CMP     R6, #14                 
+ 1b0:	e356000e 	cmp	r6, #14
+        LDREQ   R7, =0x79         /* 0b01111001 = 0x79: displaying E */
+ 1b4:	03a07079 	moveq	r7, #121	; 0x79
+
+        CMP     R6, #15                 
+ 1b8:	e356000f 	cmp	r6, #15
+        LDREQ   R7, =0x71         /* 0b01110001 = 0x71: displaying F */
+ 1bc:	03a07071 	moveq	r7, #113	; 0x71
+
+        MOV     PC, LR           /* exit BinaryDecoder */
+ 1c0:	e1a0f00e 	mov	pc, lr
+
+000001c4 <WAIT>:
+
+WAIT:
+        LDR     R12, [R1]
+ 1c4:	e591c000 	ldr	r12, [r1]
+        CMP     R12, #0
+ 1c8:	e35c0000 	cmp	r12, #0
+        BNE     WAIT
+ 1cc:	1afffffc 	bne	1c4 <WAIT>
+        MOV     PC, LR
+ 1d0:	e1a0f00e 	mov	pc, lr
+ 1d4:	ff200050 	.word	0xff200050
+ 1d8:	ff200040 	.word	0xff200040
+ 1dc:	ff200020 	.word	0xff200020
+ 1e0:	ff200030 	.word	0xff200030
+ 1e4:	40404040 	.word	0x40404040
