@@ -10,10 +10,7 @@ _start:
         LDR     R4, =HEX5_HEX4_BASE     /* Address of the high two 7segment digits */
         LDR     SP, =STACK_BASE
 
-@ for keeping track of stack counter
-        LDR     R0, =0
-        @ CMP     R0, #0
-        @ BLEQ    CLEAR
+        LDR     R0, =0                  /* for keeping track of stack counter */
 
 LOOP:   
 @ for decoding 10 switches value to 4 of 7segment displays   
@@ -150,7 +147,7 @@ BinaryDecoder:
         CMP     R6, #3
         LDREQ   R7, =0x4F         /* 0b01001111 = 0x4F : displaying 3 */
 
-        CMP     R5, #4
+        CMP     R6, #4
         LDREQ   R7, =0x66         /* 0b01100110 = 0x66 : displaying 4 */
 
         CMP     R6, #5
@@ -194,3 +191,24 @@ WAIT:
         BNE     WAIT
         MOV     PC, LR
 .end                        
+/*
+PC              |        
+r0              | stack counter
+r1              | KEY address
+r2              | SW address
+r3              | HEX0, HEX1, HEX2, HEX3 address
+r4              | HEX4, HEX5 address
+r5     0000 03FF| SW state, 10 bits - for rotation subroutine
+----------------------
+r6             F| current state of 4 LSB bits of switch
+r7     0000 0071| 7SSD pattern, 8 bits (2 hex)
+r8     3F4F 7171| 7SSD pattern, 32 bits (4 hex). operand 3 (result)
+r9     0000 03FF| operand 1
+r10    0000 0649| operand 2
+r11    0000 03FF| SW state, 10 bits
+r12    0000 0008| KEY state
+----------------------
+sp              |
+lr              |
+CPSR            | N  Z  C  V
+*/

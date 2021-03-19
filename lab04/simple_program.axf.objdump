@@ -258,8 +258,8 @@ BinaryDecoder:
         LDREQ   R7, =0x4F         /* 0b01001111 = 0x4F : displaying 3 */
  15c:	03a0704f 	moveq	r7, #79	; 0x4f
 
-        CMP     R5, #4
- 160:	e3550004 	cmp	r5, #4
+        CMP     R6, #4
+ 160:	e3560004 	cmp	r6, #4
         LDREQ   R7, =0x66         /* 0b01100110 = 0x66 : displaying 4 */
  164:	03a07066 	moveq	r7, #102	; 0x66
 
