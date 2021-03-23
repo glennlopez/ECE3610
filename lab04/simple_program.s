@@ -40,9 +40,9 @@ STORE:
         MOV     R11, LR
         BL      WAIT
 
-        STMFD   SP!,{R5}        /* update current switch values to 7segment */
-        BL      ROTATION
-        STR     R8, [R3]
+        STMFD   SP!,{R5}        /* update current switch values to stack */
+        BL      ROTATION        
+        STR     R8, [R3]        /* update current switch values to 7segment */
 
         ADD     R0, R0, #1      /* increment stack counter */
         MOV     R6, R0          /* update stack counter on 7segment */

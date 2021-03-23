@@ -21,8 +21,7 @@ _start:
         LDR     SP, =STACK_BASE
   10:	e3a0d203 	mov	sp, #805306368	; 0x30000000
 
-@ for keeping track of stack counter
-        LDR     R0, =0
+        LDR     R0, =0                  /* for keeping track of stack counter */
   14:	e3a00000 	mov	r0, #0
 
 00000018 <LOOP>:
