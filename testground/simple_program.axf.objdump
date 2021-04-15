@@ -5,36 +5,40 @@ C:/Users/ngocp/OneDrive/Documents/Github/ECE3610/testground/simple_program.axf: 
 Disassembly of section .text:
 
 00000000 <__cs3_interrupt_vector>:
-_start: 
-        @ LDR     R0, =0xFFFFFFFF
-        @ LDR     R1, =0x03F00000
-        @ LDR     R2, =0x11223344
-        @ LDR     R4, =0xABCDEF00
-        LDR     SP, =0x00010000
-   0:	e3a0d801 	mov	sp, #65536	; 0x10000
-@ SET:
-@ 	LDR     r0, =0xFFFFFFFF
-@ 	B       EXIT                            
-@ EXIT:
+.global     _start    
+.equ    Plaintext, 0x00000050
+.equ    Cyphertext, 0x0000070
 
-        MOV     r0, #0
-   4:	e3a00000 	mov	r0, #0
-        MOV     r1, #6
-   8:	e3a01006 	mov	r1, #6
+_start: 
+        LDR     R1, =Plaintext
+   0:	e3a01050 	mov	r1, #80	; 0x50
+        LDR     R2, =Cyphertext
+   4:	e3a02070 	mov	r2, #112	; 0x70
+
+        MOV     R3, #0
+   8:	e3a03000 	mov	r3, #0
 
 0000000c <LOOP>:
-LOOP:
-        LDR     r2,[SP]
-   c:	e59d2000 	ldr	r2, [sp]
-        LDR     r3,[SP],#4
-  10:	e49d3004 	pop	{r3}		; (ldr r3, [sp], #4)
-        LSRS    r3,r3,#1
-  14:	e1b030a3 	lsrs	r3, r3, #1
-        ADDCS   r0,r0,r2
-  18:	20800002 	addcs	r0, r0, r2
-        SUBS    r1,r1,#1
-  1c:	e2511001 	subs	r1, r1, #1
-        BEQ     EXIT
-  20:	0a000000 	beq	28 <EXIT>
-        BNE     LOOP
-  24:	1afffff8 	bne	c <LOOP>
+
+LOOP:   
+        LDRB    r4,[r1,r3]
+   c:	e7d14003 	ldrb	r4, [r1, r3]
+        CMP     r4, #0
+  10:	e3540000 	cmp	r4, #0
+        BEQ     Exit
+  14:	0a000005 	beq	30 <Exit>
+
+        ADD     r4, r4, #1
+  18:	e2844001 	add	r4, r4, #1
+        STRB    r4, [r2,r3]
+  1c:	e7c24003 	strb	r4, [r2, r3]
+        ADD     r3, r3, #1
+  20:	e2833001 	add	r3, r3, #1
+
+        CMP     r3, #20
+  24:	e3530014 	cmp	r3, #20
+        BEQ     Exit
+  28:	0a000000 	beq	30 <Exit>
+
+        B       LOOP
+  2c:	eafffff6 	b	c <LOOP>

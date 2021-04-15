@@ -1,0 +1,541 @@
+
+C:/Users/ngocp/OneDrive/Documents/Github/ECE3610/lab05/interrupt_example.axf:     file format elf32-littlearm
+
+
+Disassembly of section .vectors:
+
+00000000 <__cs3_interrupt_vector>:
+   0:	ea00000e 	b	40 <__cs3_region_init_ram>
+   4:	ea00004c 	b	13c <SERVICE_UND>
+   8:	ea00004c 	b	140 <SERVICE_SVC>
+   c:	ea00004d 	b	148 <SERVICE_ABT_INST>
+  10:	ea00004b 	b	144 <SERVICE_ABT_DATA>
+  14:	00000000 	.word	0x00000000
+  18:	ea000036 	b	f8 <SERVICE_IRQ>
+  1c:	ea00004a 	b	14c <SERVICE_FIQ>
+
+Disassembly of section .text:
+
+00000040 <__cs3_region_start_ram>:
+ ********************************************************************************/
+.text                                   
+.global     _start                      
+_start:                                     
+/* Set up stack pointers for IRQ and SVC processor modes */
+        MOV     R1, #INT_DISABLE | IRQ_MODE 
+  40:	e3a010d2 	mov	r1, #210	; 0xd2
+        MSR     CPSR_c, R1                  // change to IRQ mode
+  44:	e121f001 	msr	CPSR_c, r1
+        LDR     SP, =A9_ONCHIP_END - 3      // set IRQ stack to top of A9 onchip
+  48:	e3e0d003 	mvn	sp, #3
+                                            // memory
+
+/* Change to SVC (supervisor) mode with interrupts disabled */
+        MOV     R1, #INT_DISABLE | SVC_MODE 
+  4c:	e3a010d3 	mov	r1, #211	; 0xd3
+        MSR     CPSR_c, R1                  // change to supervisor mode
+  50:	e121f001 	msr	CPSR_c, r1
+        LDR     SP, =DDR_END - 3            // set SVC stack to top of DDR3 memory
+  54:	e3e0d10f 	mvn	sp, #-1073741821	; 0xc0000003
+
+        BL      CONFIG_GIC                  // configure the ARM generic interrupt
+  58:	eb00003c 	bl	150 <CONFIG_GIC>
+                                            // controller
+        BL      CONFIG_HPS_TIMER            // configure the HPS timer
+  5c:	eb000007 	bl	80 <CONFIG_HPS_TIMER>
+        BL      CONFIG_INTERVAL_TIMER       // configure the Altera interval timer
+  60:	eb00000e 	bl	a0 <CONFIG_INTERVAL_TIMER>
+        BL      CONFIG_KEYS                 // configure the pushbutton KEYs
+  64:	eb000015 	bl	c0 <CONFIG_KEYS>
+
+/* initialize the GPIO1 port */
+        LDR     R0, =HPS_GPIO1_BASE         // GPIO1 base address
+  68:	e59f0070 	ldr	r0, [pc, #112]	; e0 <PREVIOUS_STATE+0x4>
+        MOV     R4, #0x01000000             // value to turn on the HPS green light
+  6c:	e3a04401 	mov	r4, #16777216	; 0x1000000
+                                            // LEDG
+        STR     R4, [R0, #0x4]              // write to the data direction register
+  70:	e5804004 	str	r4, [r0, #4]
+                                            // to set
+                                            // bit 24 (LEDG) to be an output
+/* enable IRQ interrupts in the processor */
+        MOV     R1, #INT_ENABLE | SVC_MODE  // IRQ unmasked, MODE = SVC
+  74:	e3a01053 	mov	r1, #83	; 0x53
+        MSR     CPSR_c, R1                  
+  78:	e121f001 	msr	CPSR_c, r1
+
+0000007c <LOOP>:
+@         BEQ     LOOP                        
+@         MOV     R5, #0                      
+@         STR     R5, [R3]                    // reset tick variable
+@         STR     R4, [R0]                    // turn on/off LEDG
+@         EOR     R4, R4, #0x01000000         // toggle bit that controls LEDG
+        B       LOOP                        
+  7c:	eafffffe 	b	7c <LOOP>
+
+00000080 <CONFIG_HPS_TIMER>:
+
+/* Configure the HPS timer to create interrupts at one-second intervals */
+CONFIG_HPS_TIMER:                           
+/* initialize the HPS timer */
+        LDR     R0, =HPS_TIMER0_BASE        // base address
+  80:	e59f005c 	ldr	r0, [pc, #92]	; e4 <PREVIOUS_STATE+0x8>
+        MOV     R1, #0                      // used to stop the timer
+  84:	e3a01000 	mov	r1, #0
+        STR     R1, [R0, #0x8]              // write to timer control register
+  88:	e5801008 	str	r1, [r0, #8]
+        LDR     R1, =100000000              // period = 1/(100 MHz) x (100 x 10^6)
+  8c:	e59f1054 	ldr	r1, [pc, #84]	; e8 <PREVIOUS_STATE+0xc>
+                                            // = 1 sec
+        STR     R1, [R0]                    // write to timer load register
+  90:	e5801000 	str	r1, [r0]
+        MOV     R1, #0b011                  // int mask = 0, mode = 1, enable = 1
+  94:	e3a01003 	mov	r1, #3
+        STR     R1, [R0, #0x8]              // write to timer control register
+  98:	e5801008 	str	r1, [r0, #8]
+        BX      LR                          
+  9c:	e12fff1e 	bx	lr
+
+000000a0 <CONFIG_INTERVAL_TIMER>:
+
+/* Configure the Altera interval timer to create interrupts at 50-msec intervals */
+CONFIG_INTERVAL_TIMER:                      
+        LDR     R0, =TIMER_BASE             
+  a0:	e59f0044 	ldr	r0, [pc, #68]	; ec <PREVIOUS_STATE+0x10>
+/* set the interval timer period for scrolling the LED displays */
+        LDR     R1, =5000000                // 1/(100 MHz) x 5x10^6 = 50 msec
+  a4:	e59f1044 	ldr	r1, [pc, #68]	; f0 <PREVIOUS_STATE+0x14>
+        STR     R1, [R0, #0x8]              // store the low half word of counter
+  a8:	e5801008 	str	r1, [r0, #8]
+                                            // start value
+        LSR     R1, R1, #16                 
+  ac:	e1a01821 	lsr	r1, r1, #16
+        STR     R1, [R0, #0xC]              // high half word of counter start value
+  b0:	e580100c 	str	r1, [r0, #12]
+
+                                            // start the interval timer, enable its interrupts
+        MOV     R1, #0x7                    // START = 1, CONT = 1, ITO = 1
+  b4:	e3a01007 	mov	r1, #7
+        STR     R1, [R0, #0x4]              
+  b8:	e5801004 	str	r1, [r0, #4]
+        BX      LR                          
+  bc:	e12fff1e 	bx	lr
+
+000000c0 <CONFIG_KEYS>:
+
+/* Configure the pushbutton KEYS to generate interrupts */
+CONFIG_KEYS:                                
+                                            // write to the pushbutton port interrupt mask register
+        LDR     R0, =KEY_BASE               // pushbutton key base address
+  c0:	e59f002c 	ldr	r0, [pc, #44]	; f4 <PREVIOUS_STATE+0x18>
+        MOV     R1, #0xF                    // set interrupt mask bits
+  c4:	e3a0100f 	mov	r1, #15
+        STR     R1, [R0, #0x8]              // interrupt mask register is (base + 8)
+  c8:	e5801008 	str	r1, [r0, #8]
+        BX      LR                          
+  cc:	e12fff1e 	bx	lr
+
+000000d0 <TICK>:
+  d0:	00000000 	.word	0x00000000
+
+000000d4 <PATTERN>:
+  d4:	0f0f0f0f 	.word	0x0f0f0f0f
+
+000000d8 <KEY_DIR>:
+  d8:	00000000 	.word	0x00000000
+
+000000dc <PREVIOUS_STATE>:
+  dc:	00000000 	.word	0x00000000
+  e0:	ff709000 	.word	0xff709000
+  e4:	ffc08000 	.word	0xffc08000
+  e8:	05f5e100 	.word	0x05f5e100
+  ec:	ff202000 	.word	0xff202000
+  f0:	004c4b40 	.word	0x004c4b40
+  f4:	ff200050 	.word	0xff200050
+
+000000f8 <SERVICE_IRQ>:
+ */
+
+/*--- IRQ ---------------------------------------------------------------------*/
+.global     SERVICE_IRQ             
+SERVICE_IRQ:                            
+        PUSH    {R0-R7, LR}             
+  f8:	e92d40ff 	push	{r0, r1, r2, r3, r4, r5, r6, r7, lr}
+
+/* Read the ICCIAR from the CPU interface */
+        LDR     R4, =MPCORE_GIC_CPUIF   
+  fc:	e59f409c 	ldr	r4, [pc, #156]	; 1a0 <ICDICER+0x20>
+        LDR     R5, [R4, #ICCIAR]       // read the interrupt ID
+ 100:	e594500c 	ldr	r5, [r4, #12]
+
+00000104 <HPS_TIMER_CHECK>:
+
+HPS_TIMER_CHECK:                        
+        CMP     R5, #HPS_TIMER0_IRQ     // check for HPS timer interrupt
+ 104:	e35500c7 	cmp	r5, #199	; 0xc7
+        BNE     INTERVAL_TIMER_CHECK    
+ 108:	1a000001 	bne	114 <INTERVAL_TIMER_CHECK>
+
+        BL      HPS_TIMER_ISR           
+ 10c:	eb00002b 	bl	1c0 <HPS_TIMER_ISR>
+        B       EXIT_IRQ                
+ 110:	ea000006 	b	130 <EXIT_IRQ>
+
+00000114 <INTERVAL_TIMER_CHECK>:
+
+INTERVAL_TIMER_CHECK:                   
+        CMP     R5, #INTERVAL_TIMER_IRQ // check for FPGA timer interrupt
+ 114:	e3550048 	cmp	r5, #72	; 0x48
+        BNE     KEYS_CHECK              
+ 118:	1a000001 	bne	124 <KEYS_CHECK>
+
+        BL      TIMER_ISR               
+ 11c:	eb000041 	bl	228 <TIMER_ISR>
+        B       EXIT_IRQ                
+ 120:	ea000002 	b	130 <EXIT_IRQ>
+
+00000124 <KEYS_CHECK>:
+
+KEYS_CHECK:                             
+        CMP     R5, #KEYS_IRQ           
+ 124:	e3550049 	cmp	r5, #73	; 0x49
+
+00000128 <UNEXPECTED>:
+UNEXPECTED:                             
+        BNE     UNEXPECTED              // if not recognized, stop here
+ 128:	1afffffe 	bne	128 <UNEXPECTED>
+
+        BL      KEY_ISR                 
+ 12c:	eb00002c 	bl	1e4 <KEY_ISR>
+
+00000130 <EXIT_IRQ>:
+EXIT_IRQ:                               
+/* Write to the End of Interrupt Register (ICCEOIR) */
+        STR     R5, [R4, #ICCEOIR]      
+ 130:	e5845010 	str	r5, [r4, #16]
+
+        POP     {R0-R7, LR}             
+ 134:	e8bd40ff 	pop	{r0, r1, r2, r3, r4, r5, r6, r7, lr}
+        SUBS    PC, LR, #4              
+ 138:	e25ef004 	subs	pc, lr, #4
+
+0000013c <SERVICE_UND>:
+
+
+/*--- Undefined instructions --------------------------------------------------*/
+.global     SERVICE_UND             
+SERVICE_UND:                            
+        B       SERVICE_UND             
+ 13c:	eafffffe 	b	13c <SERVICE_UND>
+
+00000140 <SERVICE_SVC>:
+
+/*--- Software interrupts -----------------------------------------------------*/
+.global     SERVICE_SVC             
+SERVICE_SVC:                            
+        B       SERVICE_SVC             
+ 140:	eafffffe 	b	140 <SERVICE_SVC>
+
+00000144 <SERVICE_ABT_DATA>:
+
+/*--- Aborted data reads ------------------------------------------------------*/
+.global     SERVICE_ABT_DATA        
+SERVICE_ABT_DATA:                       
+        B       SERVICE_ABT_DATA        
+ 144:	eafffffe 	b	144 <SERVICE_ABT_DATA>
+
+00000148 <SERVICE_ABT_INST>:
+
+/*--- Aborted instruction fetch -----------------------------------------------*/
+.global     SERVICE_ABT_INST        
+SERVICE_ABT_INST:                       
+        B       SERVICE_ABT_INST        
+ 148:	eafffffe 	b	148 <SERVICE_ABT_INST>
+
+0000014c <SERVICE_FIQ>:
+
+/*--- FIQ ---------------------------------------------------------------------*/
+.global     SERVICE_FIQ             
+SERVICE_FIQ:                            
+        B       SERVICE_FIQ             
+ 14c:	eafffffe 	b	14c <SERVICE_FIQ>
+
+00000150 <CONFIG_GIC>:
+ * Configure the Generic Interrupt Controller (GIC)
+ */
+.global     CONFIG_GIC              
+CONFIG_GIC:                             
+/* configure the HPS timer interrupt */
+        LDR     R0, =0xFFFED8C4         // ICDIPTRn: processor targets register
+ 150:	e59f004c 	ldr	r0, [pc, #76]	; 1a4 <ICDICER+0x24>
+        LDR     R1, =0x01000000         // set target to cpu0
+ 154:	e3a01401 	mov	r1, #16777216	; 0x1000000
+        STR     R1, [R0]                
+ 158:	e5801000 	str	r1, [r0]
+
+        LDR     R0, =0xFFFED118         // ICDISERn: set enable register
+ 15c:	e59f0044 	ldr	r0, [pc, #68]	; 1a8 <ICDICER+0x28>
+        LDR     R1, =0x00000080         // set interrupt enable
+ 160:	e3a01080 	mov	r1, #128	; 0x80
+        STR     R1, [R0]                
+ 164:	e5801000 	str	r1, [r0]
+
+/* configure the FPGA IRQ0 (interval timer) and IRQ1 (KEYs) interrupts */
+        LDR     R0, =0xFFFED848         // ICDIPTRn: processor targets register
+ 168:	e59f003c 	ldr	r0, [pc, #60]	; 1ac <ICDICER+0x2c>
+        LDR     R1, =0x00000101         // set targets to cpu0
+ 16c:	e59f103c 	ldr	r1, [pc, #60]	; 1b0 <ICDICER+0x30>
+        STR     R1, [R0]                
+ 170:	e5801000 	str	r1, [r0]
+
+        LDR     R0, =0xFFFED108         // ICDISERn: set enable register
+ 174:	e59f0038 	ldr	r0, [pc, #56]	; 1b4 <ICDICER+0x34>
+        LDR     R1, =0x00000300         // set interrupt enable
+ 178:	e3a01c03 	mov	r1, #768	; 0x300
+        STR     R1, [R0]                
+ 17c:	e5801000 	str	r1, [r0]
+
+/* configure the GIC CPU interface */
+        LDR     R0, =MPCORE_GIC_CPUIF   // base address of CPU interface
+ 180:	e59f0018 	ldr	r0, [pc, #24]	; 1a0 <ICDICER+0x20>
+/* Set Interrupt Priority Mask Register (ICCPMR) */
+        LDR     R1, =0xFFFF             // 0xFFFF enables interrupts of all
+ 184:	e59f102c 	ldr	r1, [pc, #44]	; 1b8 <ICDICER+0x38>
+                                        // priorities levels
+        STR     R1, [R0, #ICCPMR]       
+ 188:	e5801004 	str	r1, [r0, #4]
+/* Set the enable bit in the CPU Interface Control Register (ICCICR). This bit
+ * allows interrupts to be forwarded to the CPU(s) */
+        MOV     R1, #ENABLE             
+ 18c:	e3a01001 	mov	r1, #1
+        STR     R1, [R0, #ICCICR]       
+ 190:	e5801000 	str	r1, [r0]
+
+/* Set the enable bit in the Distributor Control Register (ICDDCR). This bit
+ * allows the distributor to forward interrupts to the CPU interface(s) */
+        LDR     R0, =MPCORE_GIC_DIST    
+ 194:	e59f0020 	ldr	r0, [pc, #32]	; 1bc <ICDICER+0x3c>
+        STR     R1, [R0, #ICDDCR]       
+ 198:	e5801000 	str	r1, [r0]
+        BX      LR                      
+ 19c:	e12fff1e 	bx	lr
+ 1a0:	fffec100 	.word	0xfffec100
+ 1a4:	fffed8c4 	.word	0xfffed8c4
+ 1a8:	fffed118 	.word	0xfffed118
+ 1ac:	fffed848 	.word	0xfffed848
+ 1b0:	00000101 	.word	0x00000101
+ 1b4:	fffed108 	.word	0xfffed108
+ 1b8:	0000ffff 	.word	0x0000ffff
+ 1bc:	fffed000 	.word	0xfffed000
+
+000001c0 <HPS_TIMER_ISR>:
+ *****************************************************************************/
+
+.global     HPS_TIMER_ISR           
+HPS_TIMER_ISR:
+
+        LDR     R0, =HPS_TIMER0_BASE    // base address of timer
+ 1c0:	e59f0014 	ldr	r0, [pc, #20]	; 1dc <HPS_TIMER_ISR+0x1c>
+
+        LDR     R8, =HPS_GPIO1_BASE
+ 1c4:	e59f8014 	ldr	r8, [pc, #20]	; 1e0 <HPS_TIMER_ISR+0x20>
+        LDR     R9, [R8]
+ 1c8:	e5989000 	ldr	r9, [r8]
+        EOR     R9, R9, #0x01000000     // toggle bit that controls LEDG
+ 1cc:	e2299401 	eor	r9, r9, #16777216	; 0x1000000
+        STR     R9, [R8]                // turn on/off LEDG
+ 1d0:	e5889000 	str	r9, [r8]
+
+        @ LDR     R2, [R1]                
+        @ ADD     R2, R2, #1              
+        @ STR     R2, [R1]                // ++tick
+
+        LDR     R0, [R0, #0xC]          // read timer end of interrupt register to
+ 1d4:	e590000c 	ldr	r0, [r0, #12]
+                                        // clear the interrupt
+        BX      LR                      
+ 1d8:	e12fff1e 	bx	lr
+ 1dc:	ffc08000 	.word	0xffc08000
+ 1e0:	ff709000 	.word	0xff709000
+
+000001e4 <KEY_ISR>:
+ *
+ * This routine toggles the KEY_DIR variable from 0 <-> 1
+ ****************************************************************************************/
+.global     KEY_ISR         
+KEY_ISR:
+        LDR     R0, =KEY_BASE   // base address of pushbutton KEY parallel port
+ 1e4:	e59f0034 	ldr	r0, [pc, #52]	; 220 <END_KEY_ISR+0x4>
+/* KEY[1] is the only key configured for interrupts, so just clear it. */
+        LDR     R1, [R0, #0xC]  // read edge capture register
+ 1e8:	e590100c 	ldr	r1, [r0, #12]
+        STR     R1, [R0, #0xC]  // clear the interrupt
+ 1ec:	e580100c 	str	r1, [r0, #12]
+
+
+        LDR     R3, =KEY_DIR    // set up a pointer to the shift direction variable
+ 1f0:	e59f302c 	ldr	r3, [pc, #44]	; 224 <END_KEY_ISR+0x8>
+        @ LDR     R2, [R1]        // load value of shift direction variable
+        @ EOR     R2, R2, #1      // toggle the shift direction
+        @ STR     R2, [R1]        
+
+        LDR R2, [R3]    // load value of shift direction variable
+ 1f4:	e5932000 	ldr	r2, [r3]
+
+        CMP R1 , #1     // check if key 0 is pressed 
+ 1f8:	e3510001 	cmp	r1, #1
+        MOVEQ R2, #1    // If pressed, Mov 1 to register 2 which is a pointer to KEY_DIR
+ 1fc:	03a02001 	moveq	r2, #1
+
+        CMP R1, #2      // check if key 1 is pressed  
+ 200:	e3510002 	cmp	r1, #2
+        MOVEQ R2, #2    // If pressed, Mov 2 to register 2 which is a pointer to KEY_DIR
+ 204:	03a02002 	moveq	r2, #2
+
+        CMP R1, #4      // check if key 2 is pressed 
+ 208:	e3510004 	cmp	r1, #4
+        MOVEQ R2, #4    // If pressed, Mov 4 to register 2 which is a pointer to KEY_DIR 
+ 20c:	03a02004 	moveq	r2, #4
+
+        CMP R1, #8      // check if key 3 is pressed 
+ 210:	e3510008 	cmp	r1, #8
+        MOVEQ R2, #8    // If pressed, Mov 8 to register 2 which is a pointer to KEY_DIR
+ 214:	03a02008 	moveq	r2, #8
+
+        STR R2, [R3]          
+ 218:	e5832000 	str	r2, [r3]
+
+0000021c <END_KEY_ISR>:
+
+END_KEY_ISR:
+        BX      LR              
+ 21c:	e12fff1e 	bx	lr
+ 220:	ff200050 	.word	0xff200050
+ 224:	000000d8 	.word	0x000000d8
+
+00000228 <TIMER_ISR>:
+ * is determined by the external variable KEY_PRESSED.
+ *
+ ******************************************************************************/
+.global     TIMER_ISR 
+TIMER_ISR:                      
+        PUSH    {R4-R7}         
+ 228:	e92d00f0 	push	{r4, r5, r6, r7}
+        LDR     R1, =TIMER_BASE // interval timer base address
+ 22c:	e59f1090 	ldr	r1, [pc, #144]	; 2c4 <END_TIMER_ISR+0x8>
+        MOVS    R0, #0          
+ 230:	e3b00000 	movs	r0, #0
+        STR     R0, [R1]        // clear the interrupt
+ 234:	e5810000 	str	r0, [r1]
+
+        LDR     R1, =LED_BASE   // LED base address
+ 238:	e59f1088 	ldr	r1, [pc, #136]	; 2c8 <END_TIMER_ISR+0xc>
+        LDR     R2, =PATTERN    // set up a pointer to the pattern for LED displays
+ 23c:	e59f2088 	ldr	r2, [pc, #136]	; 2cc <END_TIMER_ISR+0x10>
+        LDR     R7, =KEY_DIR    // set up a pointer to the shift direction variable
+ 240:	e59f7088 	ldr	r7, [pc, #136]	; 2d0 <END_TIMER_ISR+0x14>
+
+        LDR     R3, =PREVIOUS_STATE  
+ 244:	e59f3088 	ldr	r3, [pc, #136]	; 2d4 <END_TIMER_ISR+0x18>
+        LDR     R4, [R3]
+ 248:	e5934000 	ldr	r4, [r3]
+
+        LDR     R6, [R2]        // load pattern for LED displays
+ 24c:	e5926000 	ldr	r6, [r2]
+        STR     R6, [R1]        // store to LEDs
+ 250:	e5816000 	str	r6, [r1]
+
+
+//checking KEY_DIR value, which is defined from key_isr                          
+        LDR     R5, [R7]        // get shift direction
+ 254:	e5975000 	ldr	r5, [r7]
+        
+        CMP     R5, #1          // when KEY_0 is pressed
+ 258:	e3550001 	cmp	r5, #1
+        BEQ     SHIFT_R         // shift the pattern to the right
+ 25c:	0a000005 	beq	278 <SHIFT_R>
+
+        CMP     R5, #2
+ 260:	e3550002 	cmp	r5, #2
+        BEQ     SHIFT_L
+ 264:	0a000009 	beq	290 <SHIFT_L>
+
+        CMP     R5, #4
+ 268:	e3550004 	cmp	r5, #4
+        BEQ     START
+ 26c:	0a00000d 	beq	2a8 <START>
+
+        CMP     R5, #8
+ 270:	e3550008 	cmp	r5, #8
+        BEQ     STOP
+ 274:	0a00000e 	beq	2b4 <STOP>
+
+00000278 <SHIFT_R>:
+        @ MOVS    R5, #1          // used to rotate right by 1 position
+        @ RORS    R6, R5          // rotate right for KEY1
+        @ B       END_TIMER_ISR   
+
+SHIFT_R:
+        MOVS    R5, #1          // used to rotate right by 1 position
+ 278:	e3b05001 	movs	r5, #1
+        RORS    R6, R5
+ 27c:	e1b06576 	rors	r6, r6, r5
+        STR     R6, [R2]        // store the new pattern to PATTERN variable
+ 280:	e5826000 	str	r6, [r2]
+        
+        MOV     R4, #1          // MOV 1 to register 4 so it saves in PREVIOUS_STATE variable
+ 284:	e3a04001 	mov	r4, #1
+        STR     R4, [R3]        // store the previous state value to PREVIOUS_STATE variable
+ 288:	e5834000 	str	r4, [r3]
+        B       END_TIMER_ISR
+ 28c:	ea00000a 	b	2bc <END_TIMER_ISR>
+
+00000290 <SHIFT_L>:
+
+SHIFT_L:                        
+        MOVS    R5, #31         // used to rotate left by 1 position
+ 290:	e3b0501f 	movs	r5, #31
+        RORS    R6, R5          
+ 294:	e1b06576 	rors	r6, r6, r5
+        STR     R6, [R2]        // store the new pattern to PATTERN variable
+ 298:	e5826000 	str	r6, [r2]
+        
+        MOV     R4, #0          // MOV 1 to register 4 so it saves in PREVIOUS_STATE variable
+ 29c:	e3a04000 	mov	r4, #0
+        STR     R4, [R3]        // store the previous state value to PREVIOUS_STATE variable
+ 2a0:	e5834000 	str	r4, [r3]
+        B       END_TIMER_ISR
+ 2a4:	ea000004 	b	2bc <END_TIMER_ISR>
+
+000002a8 <START>:
+
+START:
+        CMP     R4, #1          // check the PREVIOUS_STATE to resume
+ 2a8:	e3540001 	cmp	r4, #1
+        BEQ     SHIFT_R         // resume to SHIFT_R state if PREVIOUS_STATE == 1
+ 2ac:	0afffff1 	beq	278 <SHIFT_R>
+        BNE     SHIFT_L         // resume to SHIFT_L state if PREVIOUS_STATE != 1
+ 2b0:	1afffff6 	bne	290 <SHIFT_L>
+
+000002b4 <STOP>:
+
+STOP:
+        STR     R6, [R2]        // store LED display pattern
+ 2b4:	e5826000 	str	r6, [r2]
+        B       END_TIMER_ISR
+ 2b8:	eaffffff 	b	2bc <END_TIMER_ISR>
+
+000002bc <END_TIMER_ISR>:
+
+
+END_TIMER_ISR:           
+        @ STR     R6, [R2]        // store LED display pattern
+        POP     {R4-R7}         
+ 2bc:	e8bd00f0 	pop	{r4, r5, r6, r7}
+        BX      LR              
+ 2c0:	e12fff1e 	bx	lr
+ 2c4:	ff202000 	.word	0xff202000
+ 2c8:	ff200000 	.word	0xff200000
+ 2cc:	000000d4 	.word	0x000000d4
+ 2d0:	000000d8 	.word	0x000000d8
+ 2d4:	000000dc 	.word	0x000000dc
